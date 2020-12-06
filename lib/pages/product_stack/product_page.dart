@@ -12,19 +12,28 @@ class ProductPage extends StatefulWidget {
 }
 
 List<Data> data = [];
+bool isLoading = true;
 
 class _ProductPageState extends State<ProductPage> {
   Future<void> getData() async {
     var url = 'https://api.codingthailand.com/api/course';
     var response = await http.get(url);
-    //print(response.body);
-    //print(json.decode(response.body));
-    /// นำไปใส่ใน model product
-    final Product product = Product.fromJson(json.decode(response.body));
-    print(product.data);
-    setState(() {
-      data = product.data;
-    });
+    if (response.statusCode == 200) {
+      //print(response.body);
+      //print(json.decode(response.body));
+      /// นำไปใส่ใน model product
+      final Product product = Product.fromJson(json.decode(response.body));
+      print(product.data);
+      setState(() {
+        data = product.data;
+        isLoading = false;
+      });
+    } else {
+      setState(() {
+        isLoading = false;
+      });
+      print("error form backend code 400/500");
+    }
   }
 
   @override
@@ -41,34 +50,38 @@ class _ProductPageState extends State<ProductPage> {
           appBar: AppBar(
             title: Text('สินค้า'),
           ),
-          body: ListView.separated(
-              itemBuilder: (context, index) {
-                return ListTile(
-                  onTap: () {
-                    Navigator.pushNamed(context, 'productStack/detail');
-                  },
-                  leading: Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      //shape: BoxShape.circle,
-                      shape: BoxShape.rectangle,
-                      image: DecorationImage(
-                        image: NetworkImage(data[index].picture),
-                        fit: BoxFit.fill,
+          body: isLoading == true
+              ? Center(
+                  child: CircularProgressIndicator(),
+                )
+              : ListView.separated(
+                  itemBuilder: (context, index) {
+                    return ListTile(
+                      onTap: () {
+                        Navigator.pushNamed(context, 'productStack/detail');
+                      },
+                      leading: Container(
+                        width: 80,
+                        height: 80,
+                        decoration: BoxDecoration(
+                          //shape: BoxShape.circle,
+                          shape: BoxShape.rectangle,
+                          image: DecorationImage(
+                            image: NetworkImage(data[index].picture),
+                            fit: BoxFit.fill,
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                  title: Text('${data[index].title}'),
-                  subtitle: Text('${data[index].detail}'),
-                  trailing: Chip(
-                    label: Text('${data[index].view}'),
-                    backgroundColor: Colors.red[200],
-                  ),
-                );
-              },
-              separatorBuilder: (context, index) => Divider(),
-              itemCount: data.length)),
+                      title: Text('${data[index].title}'),
+                      subtitle: Text('${data[index].detail}'),
+                      trailing: Chip(
+                        label: Text('${data[index].view}'),
+                        backgroundColor: Colors.red[200],
+                      ),
+                    );
+                  },
+                  separatorBuilder: (context, index) => Divider(),
+                  itemCount: data.length)),
     );
   }
 }
